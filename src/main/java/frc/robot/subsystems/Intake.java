@@ -16,20 +16,24 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.CANBus;
 
+import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.hardware.discrete.DigitalInput;
-import org.wpilib.smartdashboard.SmartDashboard;
+//import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.command2.SubsystemBase;
 
 import org.wpilib.hardware.discrete.DigitalInput;
-import org.wpilib.smartdashboard.SmartDashboard;
+//import org.wpilib.smartdashboard.SmartDashboard;
 import org.wpilib.command2.SubsystemBase;
 
 public class Intake extends SubsystemBase {
     
-    private final TalonFX DeployKraken = new TalonFX(42);
-    private final TalonFX IntakeRollerKrakenA = new TalonFX(59);
-    private final TalonFX IntakeRollerKrakenB = new TalonFX(56);
+    private final TalonFX DeployKraken = new TalonFX(42, new CANBus(CANPort.CAN_S4));
+    private final TalonFX IntakeRollerKrakenA = new TalonFX(59, new CANBus(CANPort.CAN_S4));
+    private final TalonFX IntakeRollerKrakenB = new TalonFX(56, new CANBus(CANPort.CAN_S4));
+    
     private final VoltageOut voltageControl = new VoltageOut(0);
     private final PositionVoltage positionControl = new PositionVoltage(0);
 
@@ -60,7 +64,7 @@ public class Intake extends SubsystemBase {
     private final DigitalInput RearLimitSwitch = new DigitalInput(2);
 
     public void setIntakeVoltage(double volts) {
-        IntakeRollerKraken.setControl(voltageControl.withOutput(volts));
+        IntakeRollerKrakenA.setControl(voltageControl.withOutput(volts));
     }
 
     public void setDeployVoltage(double volts) {
@@ -74,7 +78,7 @@ public class Intake extends SubsystemBase {
         DeployKraken.setControl(
             velocityControl.withVelocity(rotationsPerSecond)
         );
-        IntakeRollerKraken.setControl(
+        IntakeRollerKrakenA.setControl(
             velocityControl.withVelocity(rotationsPerSecond)
         );
     }
@@ -103,10 +107,10 @@ public class Intake extends SubsystemBase {
      @Override
     public void periodic() {
 
-        SmartDashboard.putBoolean("Right Forward Limit Switch", !RightForwardLimitSwitch.get());
-        SmartDashboard.putBoolean("Left Forward Limit Switch", !LeftForwardLimitSwitch.get());
-        SmartDashboard.putBoolean("Rear Limit Switch", !RearLimitSwitch.get());
-        SmartDashboard.putNumber("Intake Position", DeployKraken.getPosition().getValueAsDouble());
+        Telemetry.log("Right Forward Limit Switch", !RightForwardLimitSwitch.get());
+        Telemetry.log("Left Forward Limit Switch", !LeftForwardLimitSwitch.get());
+        Telemetry.log("Rear Limit Switch", !RearLimitSwitch.get());
+        Telemetry.log("Intake Position", DeployKraken.getPosition().getValueAsDouble());
         CheckRearLimitSwitch();
         ResetExtension();
 

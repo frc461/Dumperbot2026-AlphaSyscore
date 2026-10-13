@@ -14,24 +14,28 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import org.wpilib.smartdashboard.SmartDashboard;
+//import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
+
 //import com.revrobotics.AbsoluteEncoder;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import frc.robot.constants.*;
 
 import org.wpilib.command2.SubsystemBase;
+import org.wpilib.hardware.bus.CANPort;
 
 public class Launcher extends SubsystemBase {
     
-    private final TalonFX FlywheelA = new TalonFX(41);
-    private final TalonFX FlywheelB = new TalonFX(40);
-    private final TalonFX FlywheelC = new TalonFX(43);
-    private final TalonFX FlywheelD = new TalonFX(44);
-    private final TalonFX Kicker1 = new TalonFX(50);
-    private final TalonFX Kicker2 = new TalonFX(53);
-    private final TalonFX HoodKraken = new TalonFX(51);
+    private final TalonFX FlywheelA = new TalonFX(41, new CANBus(CANPort.CAN_S0));
+    private final TalonFX FlywheelB = new TalonFX(40, new CANBus(CANPort.CAN_S0));
+    private final TalonFX FlywheelC = new TalonFX(43, new CANBus(CANPort.CAN_S0));
+    private final TalonFX FlywheelD = new TalonFX(44, new CANBus(CANPort.CAN_S0));
+    private final TalonFX Kicker1 = new TalonFX(50, new CANBus(CANPort.CAN_S0));
+    private final TalonFX Kicker2 = new TalonFX(53, new CANBus(CANPort.CAN_S0));
+    private final TalonFX HoodKraken = new TalonFX(51, new CANBus(CANPort.CAN_S0));
     
     private double targetRollerRPM = 0.0;
     private double targetHoodPosition = 0.0;
@@ -40,7 +44,7 @@ public class Launcher extends SubsystemBase {
 
     private final PositionVoltage positionControl = new PositionVoltage(0);
  
-    private final CANcoder hoodAbsoluteEncoder = new CANcoder(58);
+    private final CANcoder hoodAbsoluteEncoder = new CANcoder(58, new CANBus(CANPort.CAN_S0));
     
 
 
@@ -67,41 +71,41 @@ public class Launcher extends SubsystemBase {
         
 
 
-        MainRoller1.getConfigurator().apply(new TalonFXConfiguration());
+        FlywheelA.getConfigurator().apply(new TalonFXConfiguration());
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 40;
         config.Slot0.kP = .4;
         config.Slot0.kI = 0;
         config.Slot0.kD = 0.0;
         config.Slot0.kV = 0.2056;
-        MainRoller1.getConfigurator().apply(config);
+        FlywheelA.getConfigurator().apply(config);
 
-        MainRoller2.getConfigurator().apply(new TalonFXConfiguration());
+        FlywheelB.getConfigurator().apply(new TalonFXConfiguration());
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 40;
         config.Slot0.kP = .4;
         config.Slot0.kI = 0;
         config.Slot0.kD = 0.0;
         config.Slot0.kV = 0.2056;
-        MainRoller2.getConfigurator().apply(config);
+        FlywheelB.getConfigurator().apply(config);
 
-        MainRoller3.getConfigurator().apply(new TalonFXConfiguration());
+        FlywheelC.getConfigurator().apply(new TalonFXConfiguration());
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 40;
         config.Slot0.kP = .4;
         config.Slot0.kI = 0;
         config.Slot0.kD = 0.0;
         config.Slot0.kV = 0.2056;
-        MainRoller3.getConfigurator().apply(config);
+        FlywheelC.getConfigurator().apply(config);
 
-        MainRoller4.getConfigurator().apply(new TalonFXConfiguration());
+        FlywheelD.getConfigurator().apply(new TalonFXConfiguration());
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 40;
         config.Slot0.kP = .4;
         config.Slot0.kI = 0;
         config.Slot0.kD = 0.0;
         config.Slot0.kV = 0.2056;
-        MainRoller4.getConfigurator().apply(config);
+        FlywheelD.getConfigurator().apply(config);
 
         Kicker1.getConfigurator().apply(new TalonFXConfiguration());
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -117,8 +121,8 @@ public class Launcher extends SubsystemBase {
             new Follower(2, MotorAlignmentValue.Aligned)
         );
 
-        SmartDashboard.putNumber(KEY_HOOD_ANGLE, 0.0);
-        SmartDashboard.putNumber(KEY_FLY_RPM, 0.0);
+        Telemetry.log(KEY_HOOD_ANGLE, 0.0);
+        Telemetry.log(KEY_FLY_RPM, 0.0);
 
         // SmartDashboard.putNumber("Tuning Kp", lastP);
         // SmartDashboard.putNumber("Tuning Ki", lastI);
@@ -128,19 +132,19 @@ public class Launcher extends SubsystemBase {
     private final VoltageOut voltageControl = new VoltageOut(0);
 
     public void setVoltage(double volts) {
-        MainRoller1.setControl(voltageControl.withOutput(volts));
+        FlywheelA.setControl(voltageControl.withOutput(volts));
     }
 
-    public void setMainRoller2Voltage(double volts) {
-        MainRoller2.setControl(voltageControl.withOutput(volts));
+    public void setFlywheelBVoltage(double volts) {
+        FlywheelB.setControl(voltageControl.withOutput(volts));
     }
 
-    public void setMainRoller3Voltage(double volts) {
-        MainRoller3.setControl(voltageControl.withOutput(volts));
+    public void setFlywheelCVoltage(double volts) {
+        FlywheelC.setControl(voltageControl.withOutput(volts));
     }
 
-    public void setMainRoller4Voltage(double volts) {
-        MainRoller4.setControl(voltageControl.withOutput(volts));
+    public void setFlywheelDVoltage(double volts) {
+        FlywheelD.setControl(voltageControl.withOutput(volts));
     }
 
     public void setKicker1Voltage(double volts) {
@@ -159,10 +163,10 @@ public class Launcher extends SubsystemBase {
     }
     public void runRollers() {
         double rps = targetRollerRPM / 60.0;
-        MainRoller1.setControl(velocityControl.withVelocity(rps) );
-        MainRoller2.setControl(velocityControl.withVelocity(rps) );
-        MainRoller3.setControl(velocityControl.withVelocity(rps) ); 
-        MainRoller4.setControl(velocityControl.withVelocity(rps) );   
+        FlywheelA.setControl(velocityControl.withVelocity(rps) );
+        FlywheelB.setControl(velocityControl.withVelocity(rps) );
+        FlywheelC.setControl(velocityControl.withVelocity(rps) ); 
+        FlywheelD.setControl(velocityControl.withVelocity(rps) );   
     }
 
     public void setHoodPosition(double pose) {
@@ -200,9 +204,10 @@ public class Launcher extends SubsystemBase {
     }
 
     public void stopMainRollers() {
-        MainRoller1.stopMotor();
-        MainRoller2.stopMotor();
-        MainRoller3.stopMotor();
+        FlywheelA.stopMotor();
+        FlywheelB.stopMotor();
+        FlywheelC.stopMotor();
+        FlywheelD.stopMotor();
     }
 
     private static final String KEY_FLY_RPM = "Launcher RPM";
@@ -212,16 +217,16 @@ public class Launcher extends SubsystemBase {
     @Override
     public void periodic() {
 
-        SmartDashboard.putNumber("Flywheel Actual RPM", MainRoller1.getVelocity().getValueAsDouble() * 60.0);
-        SmartDashboard.putNumber("Flywheel Target RPM", targetRollerRPM);
-        SmartDashboard.putNumber("Flywheel Temperature", MainRoller1.getDeviceTemp().getValueAsDouble());
-        SmartDashboard.putNumber("Hood Position", HoodKraken.getPosition().getValueAsDouble());
-        SmartDashboard.putNumber("Encoder Position", hoodAbsoluteEncoder.getPosition().getValueAsDouble());
-        SmartDashboard.putNumber("convertHoodPosition", convertHoodPosition(1.25));
+        Telemetry.log("Flywheel Actual RPM", FlywheelA.getVelocity().getValueAsDouble() * 60.0);
+        Telemetry.log("Flywheel Target RPM", targetRollerRPM);
+        Telemetry.log("Flywheel Temperature", FlywheelA.getDeviceTemp().getValueAsDouble());
+        Telemetry.log("Hood Position", HoodKraken.getPosition().getValueAsDouble());
+        Telemetry.log("Encoder Position", hoodAbsoluteEncoder.getPosition().getValueAsDouble());
+        Telemetry.log("convertHoodPosition", convertHoodPosition(1.25));
 
         
-        double hoodAngle = SmartDashboard.getNumber(KEY_HOOD_ANGLE, 0.0);
-        double launcherRPM = SmartDashboard.getNumber(KEY_FLY_RPM, 0.0);
+        // double hoodAngle = SmartDashboard.getNumber(KEY_HOOD_ANGLE, 0.0);
+        // double launcherRPM = SmartDashboard.getNumber(KEY_FLY_RPM, 0.0);
        
         
         // setFlywheelVelocity(launcherRPM);

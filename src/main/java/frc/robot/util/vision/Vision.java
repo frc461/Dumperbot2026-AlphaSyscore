@@ -3,14 +3,14 @@ package frc.robot.util.vision;
 import org.wpilib.math.geometry.Transform3d;
 import org.wpilib.math.numbers.N1;
 import org.wpilib.math.numbers.N3;
-import org.wpilib.vision.apriltag.AprilTagFieldLayout;
-import org.wpilib.vision.apriltag.AprilTagFields;
+
 import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.math.util.Units;
 import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.smartdashboard.Field2d;
 import org.wpilib.command2.SubsystemBase;
+import org.wpilib.fields.Field;
 import org.wpilib.math.linalg.Matrix;
 import org.wpilib.math.linalg.VecBuilder;
 import org.wpilib.math.geometry.Pose2d;
@@ -25,6 +25,7 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 
 import frc.robot.constants.Constants;
+import frc.robot.util.FieldUtil;
 import frc.robot.util.vision.Vision.BW.BWCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
@@ -45,7 +46,7 @@ public final class Vision extends SubsystemBase{
     public static PhotonPipelineResult latestResultCameraFL = new PhotonPipelineResult();
     public static PhotonPipelineResult latestResultCameraBR = new PhotonPipelineResult();
 
-    private final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+    private final Field kTagLayout = FieldUtil.layout2026;
 
     private final Map<BWCamera, PhotonPoseEstimator> estimators = new EnumMap<>(BWCamera.class);   
     
