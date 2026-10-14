@@ -136,9 +136,9 @@ public class TunerConstants {
 
 
     // Front Left
-    private static final int kFrontLeftDriveMotorId = 11;
-    private static final int kFrontLeftSteerMotorId = 31;
-    private static final int kFrontLeftEncoderId = 21;
+    private static final int kFrontLeftDriveMotorId = 21;
+    private static final int kFrontLeftSteerMotorId = 23;
+    private static final int kFrontLeftEncoderId = 22;
     private static final Angle kFrontLeftEncoderOffset = Rotations.of(0.20263671875);
     private static final boolean kFrontLeftSteerMotorInverted = true;
     private static final boolean kFrontLeftEncoderInverted = false;
@@ -147,8 +147,8 @@ public class TunerConstants {
     private static final Distance kFrontLeftYPos = Inches.of(9);
 
     // Front Right
-    private static final int kFrontRightDriveMotorId = 14;
-    private static final int kFrontRightSteerMotorId = 34;
+    private static final int kFrontRightDriveMotorId = 31;
+    private static final int kFrontRightSteerMotorId = 32;
     private static final int kFrontRightEncoderId = 24;
     private static final Angle kFrontRightEncoderOffset = Rotations.of(-0.208740234375);
     private static final boolean kFrontRightSteerMotorInverted = true;
@@ -158,9 +158,9 @@ public class TunerConstants {
     private static final Distance kFrontRightYPos = Inches.of(-9);
 
     // Back Left
-    private static final int kBackLeftDriveMotorId = 12;
-    private static final int kBackLeftSteerMotorId = 32;
-    private static final int kBackLeftEncoderId = 22;
+    private static final int kBackLeftDriveMotorId = 1;
+    private static final int kBackLeftSteerMotorId = 2;
+    private static final int kBackLeftEncoderId = 21;
     private static final Angle kBackLeftEncoderOffset = Rotations.of(0.22412109375);
     private static final boolean kBackLeftSteerMotorInverted = true;
     private static final boolean kBackLeftEncoderInverted = false;
@@ -169,8 +169,8 @@ public class TunerConstants {
     private static final Distance kBackLeftYPos = Inches.of(9);
 
     // Back Right
-    private static final int kBackRightDriveMotorId = 13;
-    private static final int kBackRightSteerMotorId = 33;
+    private static final int kBackRightDriveMotorId = 11;
+    private static final int kBackRightSteerMotorId = 12;
     private static final int kBackRightEncoderId = 23;
     private static final Angle kBackRightEncoderOffset = Rotations.of(-0.340576171875);
     private static final boolean kBackRightSteerMotorInverted = true;
