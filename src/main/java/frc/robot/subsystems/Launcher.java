@@ -45,7 +45,6 @@ public class Launcher extends SubsystemBase {
     private final PositionVoltage positionControl = new PositionVoltage(0);
  
     private final CANcoder hoodAbsoluteEncoder = new CANcoder(58, new CANBus(CANPort.CAN_S0));
-    
 
 
     public Launcher() {
@@ -61,7 +60,7 @@ public class Launcher extends SubsystemBase {
         config.Slot0.kP = 5;
         config.Slot0.kI = 0.2;
         config.Slot0.kD = 0.0;
-        config.Slot0.kV = 0.8;
+        config.Slot0.kV = 1.8;
         // config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
         // config.Feedback.FeedbackRemoteSensorID = hoodAbsoluteEncoder.getDeviceID();
         // config.Feedback.SensorToMechanismRatio = 1.0;
@@ -157,34 +156,51 @@ public class Launcher extends SubsystemBase {
 
     }
 
+    public void runLauncher(double volts) {
+        setVoltage(-volts);
+        setFlywheelBVoltage(-volts);
+        setFlywheelCVoltage(volts);
+        setFlywheelDVoltage(volts);
+        setKicker1Voltage(volts);
+        setKicker2Voltage(volts);
+    }
+
+    public void stopLauncher() {
+        FlywheelA.stopMotor();
+        FlywheelB.stopMotor();
+        FlywheelC.stopMotor();
+        FlywheelD.stopMotor();
+        Kicker1.stopMotor();
+        Kicker2.stopMotor();
+    }
+
     public void setRollerVelocity(double RPM) {
         this.targetRollerRPM = RPM;
         
     }
     public void runRollers() {
         double rps = targetRollerRPM / 60.0;
-        FlywheelA.setControl(velocityControl.withVelocity(rps) );
-        FlywheelB.setControl(velocityControl.withVelocity(rps) );
+        FlywheelA.setControl(velocityControl.withVelocity(-rps) );
+        FlywheelB.setControl(velocityControl.withVelocity(-rps) );
         FlywheelC.setControl(velocityControl.withVelocity(rps) ); 
-        FlywheelD.setControl(velocityControl.withVelocity(rps) );   
+        FlywheelD.setControl(velocityControl.withVelocity(rps) ); 
+ 
     }
 
-    public void setHoodPosition(double pose) {
-        this.targetHoodPosition = convertHoodPosition(pose);
-        
+    public void runKicker() {
+        setKicker1Voltage(-16.0);
+        setKicker2Voltage(-16.0);
+        HoodKraken.setControl(positionControl.withPosition(0.4));
     }
 
-    public double convertHoodPosition(double pose) {
-        double currentHoodEncoderPose = hoodAbsoluteEncoder.getPosition().getValueAsDouble();
-        double encoderPose = pose / Constants.LauncherConstants.ENCODER_CONVERSION;
-        double currentHoodMotorPose = HoodKraken.getPosition().getValueAsDouble();
-        return ((currentHoodEncoderPose + encoderPose) * Constants.LauncherConstants.ENCODER_CONVERSION) + currentHoodMotorPose;
-    }
+    
+
+    
 
 
 
     public void runHood() {
-        HoodKraken.setControl(positionControl.withPosition(targetHoodPosition));
+        HoodKraken.setControl(positionControl.withPosition(0.4));
     }
     
     
@@ -199,7 +215,6 @@ public class Launcher extends SubsystemBase {
     public void shuttle() {
         setRollerVelocity(-2500);
         runRollers();
-        setHoodPosition(2.65);
         runHood();
     }
 
@@ -217,13 +232,7 @@ public class Launcher extends SubsystemBase {
     @Override
     public void periodic() {
 
-        Telemetry.log("Flywheel Actual RPM", FlywheelA.getVelocity().getValueAsDouble() * 60.0);
-        Telemetry.log("Flywheel Target RPM", targetRollerRPM);
-        Telemetry.log("Flywheel Temperature", FlywheelA.getDeviceTemp().getValueAsDouble());
-        Telemetry.log("Hood Position", HoodKraken.getPosition().getValueAsDouble());
-        Telemetry.log("Encoder Position", hoodAbsoluteEncoder.getPosition().getValueAsDouble());
-        Telemetry.log("convertHoodPosition", convertHoodPosition(1.25));
-
+        
         
         // double hoodAngle = SmartDashboard.getNumber(KEY_HOOD_ANGLE, 0.0);
         // double launcherRPM = SmartDashboard.getNumber(KEY_FLY_RPM, 0.0);

@@ -63,8 +63,19 @@ public class Intake extends SubsystemBase {
     private final DigitalInput LeftForwardLimitSwitch = new DigitalInput(1);
     private final DigitalInput RearLimitSwitch = new DigitalInput(2);
 
-    public void setIntakeVoltage(double volts) {
-        IntakeRollerKrakenA.setControl(voltageControl.withOutput(volts));
+    public void setIntakeVoltage() {
+        IntakeRollerKrakenA.setControl(voltageControl.withOutput(16.0));
+        IntakeRollerKrakenB.setControl(voltageControl.withOutput(-16.0));
+    }
+
+    public void runIntake() {
+        setIntakeVoltage();
+    }
+
+    public void stopIntake() {
+        DeployKraken.stopMotor();
+        IntakeRollerKrakenA.stopMotor();
+        IntakeRollerKrakenB.stopMotor();
     }
 
     public void setDeployVoltage(double volts) {

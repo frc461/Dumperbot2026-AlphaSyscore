@@ -84,8 +84,30 @@ private Selectable<Command> autoChooser;
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.FORWARD));
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.REVERSE));
 
-        // Reset the field-centric heading on left bumper press.
+        // Reset the field-centric heading on left bumper press.][\]
         joystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+
+        joystick.rightTrigger().whileTrue(Commands.startEnd(
+            () -> intake.runIntake(),
+            intake::stopIntake
+        ));
+
+        // Operator controls: hold A to intake and hold the right trigger to shoot.
+        opjoystick.a().whileTrue(Commands.startEnd(
+            () -> launcher.setRollerVelocity(2000.0),
+            intake::stopIntake
+        ));
+
+        opjoystick.rightTrigger().whileTrue(Commands.startEnd(
+            () -> launcher.runRollers(),
+            launcher::stopLauncher
+        ));
+        opjoystick.x().whileTrue(Commands.startEnd(
+            () -> launcher.runKicker(),
+            launcher::stopLauncher
+        ));
+        
+
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
