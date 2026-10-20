@@ -1,34 +1,24 @@
 package frc.robot.subsystems;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.VelocityVoltage;
-import com.ctre.phoenix6.controls.VoltageOut; 
-import com.ctre.phoenix6.hardware.TalonFX; 
-import com.ctre.phoenix6.signals.NeutralModeValue;
-
-
-import java.io.ObjectInputFilter.Config;
-import frc.robot.constants.*;
-import frc.robot.subsystems.*;
-
-import com.ctre.phoenix6.configs.HardwareLimitSwitchConfigs;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import org.wpilib.hardware.bus.CANPort;
-import org.wpilib.hardware.discrete.DigitalInput;
-//import org.wpilib.smartdashboard.SmartDashboard;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.command2.SubsystemBase;
 
-import org.wpilib.hardware.discrete.DigitalInput;
-//import org.wpilib.smartdashboard.SmartDashboard;
-import org.wpilib.command2.SubsystemBase;
-
 public class Intake extends SubsystemBase {
+
+    private static final double RETRACTED_POSITION = 0.1;
+    private static final double  EXTENDED_POSITION = -14;
+    private static final double HOMING_VOLTAGE = 2.0;
+    private static final double HOMING_STATOR_CURRENT = 45.0;
+    private static final int HOMING_STALL_CYCLES = 8;
+    private static final int HOMING_TIMEOUT_CYCLES = 150;
     
     private final TalonFX DeployKraken = new TalonFX(42, new CANBus(CANPort.CAN_S4));
     private final TalonFX IntakeRollerKrakenA = new TalonFX(59, new CANBus(CANPort.CAN_S4));
@@ -36,11 +26,16 @@ public class Intake extends SubsystemBase {
     
     private final VoltageOut voltageControl = new VoltageOut(0);
     private final PositionVoltage positionControl = new PositionVoltage(0);
+    private boolean homing = false;
+    private int homingCycles = 0;
+    private int stalledCycles = 0;
+
 
     public Intake() {
         configureMotor(DeployKraken);
         configureMotor(IntakeRollerKrakenA);
         configureMotor(IntakeRollerKrakenB);
+        DeployKraken.setPosition(0.0);
         
     }
 
@@ -48,20 +43,18 @@ public class Intake extends SubsystemBase {
 
     private void configureMotor(TalonFX motor) {
         TalonFXConfiguration config = new TalonFXConfiguration(); 
-        DeployKraken.getConfigurator().apply(new TalonFXConfiguration());
         config.CurrentLimits.SupplyCurrentLimit = 40.0; 
         config.CurrentLimits.SupplyCurrentLowerLimit = 30.0; 
         config.CurrentLimits.SupplyCurrentLowerTime = 0.1; 
         config.CurrentLimits.StatorCurrentLimit = 60.0; 
         config.CurrentLimits.StatorCurrentLimitEnable = true; 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake; 
+        config.Slot0.kP = 1.0;
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = 0.0;
         motor.getConfigurator().apply(config); 
-        DeployKraken.getConfigurator().apply(config);
-        DeployKraken.setPosition(0);
     }
-    private final DigitalInput RightForwardLimitSwitch = new DigitalInput(0);
-    private final DigitalInput LeftForwardLimitSwitch = new DigitalInput(1);
-    private final DigitalInput RearLimitSwitch = new DigitalInput(2);
+
 
     public void setIntakeVoltage() {
         IntakeRollerKrakenA.setControl(voltageControl.withOutput(16.0));
@@ -94,39 +87,50 @@ public class Intake extends SubsystemBase {
         );
     }
 
-    public void CheckRearLimitSwitch() {
-        if (!RearLimitSwitch.get()) {
-            DeployKraken.setPosition(0);
-        }
+    public void extendIntake() {
+        DeployKraken.setControl(positionControl.withPosition(EXTENDED_POSITION));
     }
 
-    public void ResetExtension() {
-        if (!RightForwardLimitSwitch.get() && !LeftForwardLimitSwitch.get()) {
-            DeployKraken.setPosition(-70);
-        }
+    public void retractIntake() {
+        DeployKraken.setControl(positionControl.withPosition(RETRACTED_POSITION));
     }
+
+    public void stopDeployment() {
+        DeployKraken.stopMotor();
+    }
+
+    
 
     public void ExtendIntake() {
-        DeployKraken.setControl(positionControl.withPosition(-70)
-        .withLimitForwardMotion(!RightForwardLimitSwitch.get() && !LeftForwardLimitSwitch.get())
-        );
+        extendIntake();
     }
 
     public void RetractIntake() {
-        DeployKraken.setControl(positionControl.withPosition(0));
+        retractIntake();
     }
      @Override
     public void periodic() {
+        // if (homing) {
+        //     homingCycles++;
+        //     DeployKraken.setControl(voltageControl.withOutput(-HOMING_VOLTAGE));
 
-        Telemetry.log("Right Forward Limit Switch", !RightForwardLimitSwitch.get());
-        Telemetry.log("Left Forward Limit Switch", !LeftForwardLimitSwitch.get());
-        Telemetry.log("Rear Limit Switch", !RearLimitSwitch.get());
-        Telemetry.log("Intake Position", DeployKraken.getPosition().getValueAsDouble());
-        CheckRearLimitSwitch();
-        ResetExtension();
+        //     if (DeployKraken.getStatorCurrent().getValueAsDouble() >= HOMING_STATOR_CURRENT) {
+        //         stalledCycles++;
+        //     } else {
+        //         stalledCycles = 0;
+        //     }
 
-        
-        
+        //     if (stalledCycles >= HOMING_STALL_CYCLES || homingCycles >= HOMING_TIMEOUT_CYCLES) {
+        //         DeployKraken.stopMotor();
+        //         if (stalledCycles >= HOMING_STALL_CYCLES) {
+        //             DeployKraken.setPosition(RETRACTED_POSITION);
+        //         }
+        //         homing = false;
+        //     }
+        // }
+
+        // Telemetry.log("Intake Position", DeployKraken.getPosition().getValueAsDouble());
+        // Telemetry.log("Intake Homing", homing);
     }
 }
 

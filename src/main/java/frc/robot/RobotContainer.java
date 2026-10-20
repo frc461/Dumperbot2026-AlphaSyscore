@@ -72,17 +72,17 @@ private Selectable<Command> autoChooser;
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
 
-        joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        joystick.b().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
-        ));
+        //joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
+        // joystick.b().whileTrue(drivetrain.applyRequest(() ->
+        //     point.withModuleDirection(new Rotation2d(joystick.getLeftY(), joystick.getLeftX()))
+        // ));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.FORWARD));
-        joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.REVERSE));
-        joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.FORWARD));
-        joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.REVERSE));
+        // joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.FORWARD));
+        // joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.REVERSE));
+        // joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.FORWARD));
+        // joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.REVERSE));
 
         // Reset the field-centric heading on left bumper press.][\]
         joystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
@@ -91,6 +91,10 @@ private Selectable<Command> autoChooser;
             () -> intake.runIntake(),
             intake::stopIntake
         ));
+
+
+        opjoystick.b().onTrue(intake.runOnce(intake::extendIntake));
+        opjoystick.y().onTrue(intake.runOnce(intake::retractIntake));
 
         // Operator controls: hold A to intake and hold the right trigger to shoot.
         opjoystick.a().whileTrue(Commands.startEnd(
