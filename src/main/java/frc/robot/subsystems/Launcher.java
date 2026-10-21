@@ -54,19 +54,19 @@ public class Launcher extends SubsystemBase {
         hoodAbsoluteEncoder.getConfigurator().apply(encoderConfig);
 
         TalonFXConfiguration config = new TalonFXConfiguration();
-        HoodKraken.getConfigurator().apply(new TalonFXConfiguration());
-        config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        config.CurrentLimits.SupplyCurrentLimit = 40;
-        config.Slot0.kP = 5;
-        config.Slot0.kI = 0.2;
-        config.Slot0.kD = 0.0;
-        config.Slot0.kV = 1.8;
-        // config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
-        // config.Feedback.FeedbackRemoteSensorID = hoodAbsoluteEncoder.getDeviceID();
-        // config.Feedback.SensorToMechanismRatio = 1.0;
-        // config.Feedback.RotorToSensorRatio = 4.0;
-        HoodKraken.getConfigurator().apply(config);
-        HoodKraken.setPosition(0);
+        // HoodKraken.getConfigurator().apply(new TalonFXConfiguration());
+        // config.CurrentLimits.SupplyCurrentLimitEnable = true;
+        // config.CurrentLimits.SupplyCurrentLimit = 40;
+        // config.Slot0.kP = 5;
+        // config.Slot0.kI = 0.2;
+        // config.Slot0.kD = 0.0;
+        // config.Slot0.kV = 1.8;
+        // // config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
+        // // config.Feedback.FeedbackRemoteSensorID = hoodAbsoluteEncoder.getDeviceID();
+        // // config.Feedback.SensorToMechanismRatio = 1.0;
+        // // config.Feedback.RotorToSensorRatio = 4.0;
+        // HoodKraken.getConfigurator().apply(config);
+        // HoodKraken.setPosition(0);
         
 
 

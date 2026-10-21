@@ -15,6 +15,8 @@ public class Intake extends SubsystemBase {
 
     private static final double RETRACTED_POSITION = 0.1;
     private static final double  EXTENDED_POSITION = -14;
+    // Stop commanding position control once the deploy is this close to its target (rotor rotations).
+    private static final double DEPLOY_POSITION_TOLERANCE = 0.2;
     private static final double HOMING_VOLTAGE = 2.0;
     private static final double HOMING_STATOR_CURRENT = 45.0;
     private static final int HOMING_STALL_CYCLES = 8;
@@ -29,6 +31,8 @@ public class Intake extends SubsystemBase {
     private boolean homing = false;
     private int homingCycles = 0;
     private int stalledCycles = 0;
+    private boolean deployPositionActive = false;
+    private double deployTargetPosition = RETRACTED_POSITION;
 
 
     public Intake() {
@@ -65,6 +69,11 @@ public class Intake extends SubsystemBase {
         setIntakeVoltage();
     }
 
+    public void runIntakeSlow() {
+        IntakeRollerKrakenA.setControl(voltageControl.withOutput(3.0));
+        IntakeRollerKrakenB.setControl(voltageControl.withOutput(-3.0));
+    }
+
     public void stopIntake() {
         DeployKraken.stopMotor();
         IntakeRollerKrakenA.stopMotor();
@@ -88,11 +97,28 @@ public class Intake extends SubsystemBase {
     }
 
     public void extendIntake() {
-        DeployKraken.setControl(positionControl.withPosition(EXTENDED_POSITION));
+        moveDeployTo(EXTENDED_POSITION);
     }
 
     public void retractIntake() {
-        DeployKraken.setControl(positionControl.withPosition(RETRACTED_POSITION));
+        moveDeployTo(RETRACTED_POSITION);
+    }
+
+    private void moveDeployTo(double targetPosition) {
+        deployTargetPosition = targetPosition;
+        deployPositionActive = true;
+        updateDeployPosition();
+    }
+
+    private void updateDeployPosition() {
+        if (!deployPositionActive) return;
+        double error = deployTargetPosition - DeployKraken.getPosition().getValueAsDouble();
+        if (Math.abs(error) <= DEPLOY_POSITION_TOLERANCE) {
+            DeployKraken.stopMotor();
+            deployPositionActive = false;
+            return;
+        }
+        DeployKraken.setControl(positionControl.withPosition(deployTargetPosition));
     }
 
     public void stopDeployment() {
@@ -110,6 +136,7 @@ public class Intake extends SubsystemBase {
     }
      @Override
     public void periodic() {
+        updateDeployPosition();
         // if (homing) {
         //     homingCycles++;
         //     DeployKraken.setControl(voltageControl.withOutput(-HOMING_VOLTAGE));
