@@ -10,6 +10,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.command2.SubsystemBase;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
 
 public class Intake extends SubsystemBase {
 
@@ -17,6 +19,10 @@ public class Intake extends SubsystemBase {
     private static final double  EXTENDED_POSITION = -14;
     // Stop commanding position control once the deploy is this close to its target (rotor rotations).
     private static final double DEPLOY_POSITION_TOLERANCE = 0.2;
+    private static final double MANUAL_DEPLOY_VOLTS = 2.0;
+    private static final double SLOW_FEED_VOLTS = 3.0;
+    private static final double FEED_IN_SECONDS = 0.5;
+    private static final double FEED_OUT_SECONDS = 0.5;
     private static final double HOMING_VOLTAGE = 2.0;
     private static final double HOMING_STATOR_CURRENT = 45.0;
     private static final int HOMING_STALL_CYCLES = 8;
@@ -70,8 +76,41 @@ public class Intake extends SubsystemBase {
     }
 
     public void runIntakeSlow() {
-        IntakeRollerKrakenA.setControl(voltageControl.withOutput(3.0));
-        IntakeRollerKrakenB.setControl(voltageControl.withOutput(-3.0));
+        IntakeRollerKrakenA.setControl(voltageControl.withOutput(SLOW_FEED_VOLTS));
+        IntakeRollerKrakenB.setControl(voltageControl.withOutput(-SLOW_FEED_VOLTS));
+    }
+
+    public void runIntakeSlowOut() {
+        IntakeRollerKrakenA.setControl(voltageControl.withOutput(-SLOW_FEED_VOLTS));
+        IntakeRollerKrakenB.setControl(voltageControl.withOutput(SLOW_FEED_VOLTS));
+    }
+
+    /** Runs the intake rollers slowly inward, then briefly reverses them. */
+    public Command slowInThenOut() {
+        return Commands.sequence(
+            Commands.runEnd(this::runIntakeSlow, this::stopRollers, this).withTimeout(FEED_IN_SECONDS),
+            Commands.runEnd(this::runIntakeSlowOut, this::stopRollers, this).withTimeout(FEED_OUT_SECONDS)
+        );
+    }
+
+    public Command retractAndSlowInThenOut() {
+        return Commands.sequence(
+            runOnce(this::retractIntake),
+            slowInThenOut()
+        );
+    }
+
+    private void stopRollers() {
+        IntakeRollerKrakenA.stopMotor();
+        IntakeRollerKrakenB.stopMotor();
+    }
+
+    public void manualDeployIn() {
+        setDeployVoltage(MANUAL_DEPLOY_VOLTS);
+    }
+
+    public void manualDeployOut() {
+        setDeployVoltage(-MANUAL_DEPLOY_VOLTS);
     }
 
     public void stopIntake() {
@@ -81,6 +120,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void setDeployVoltage(double volts) {
+        deployPositionActive = false;
         DeployKraken.setControl(voltageControl.withOutput(volts));
     }
 
@@ -122,6 +162,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void stopDeployment() {
+        deployPositionActive = false;
         DeployKraken.stopMotor();
     }
 

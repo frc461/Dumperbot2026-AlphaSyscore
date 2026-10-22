@@ -193,6 +193,11 @@ public class Launcher extends SubsystemBase {
         HoodKraken.setControl(positionControl.withPosition(0.4));
     }
 
+    public void stopKicker() {
+        Kicker1.stopMotor();
+        Kicker2.stopMotor();
+    }
+
     
 
     
@@ -223,6 +228,10 @@ public class Launcher extends SubsystemBase {
         FlywheelB.stopMotor();
         FlywheelC.stopMotor();
         FlywheelD.stopMotor();
+    }
+
+    public void stopFlywheels() {
+        stopMainRollers();
     }
 
     private static final String KEY_FLY_RPM = "Launcher RPM";

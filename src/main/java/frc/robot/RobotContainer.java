@@ -87,28 +87,42 @@ private Selectable<Command> autoChooser;
         // Reset the field-centric heading on left bumper press.][\]
         joystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
-        joystick.rightTrigger().whileTrue(Commands.startEnd(
-            () -> intake.runIntake(),
-            intake::stopIntake
+        // Intake deployment is controlled entirely from the operator D-pad.
+        opjoystick.povUp().onTrue(intake.runOnce(intake::extendIntake));
+        opjoystick.povDown().onTrue(intake.runOnce(intake::retractIntake));
+        opjoystick.povRight().whileTrue(Commands.startEnd(
+            intake::manualDeployIn,
+            intake::stopDeployment,
+            intake
+        ));
+        opjoystick.povLeft().whileTrue(Commands.startEnd(
+            intake::manualDeployOut,
+            intake::stopDeployment,
+            intake
         ));
 
-
-        opjoystick.b().onTrue(intake.runOnce(intake::extendIntake));
-        opjoystick.y().onTrue(intake.runOnce(intake::retractIntake));
-
-        // Operator controls: hold A to intake and hold the right trigger to shoot.
-        opjoystick.a().whileTrue(Commands.startEnd(
-            () -> launcher.setRollerVelocity(2000.0),
-            intake::stopIntake
-        ));
-
+        // Right trigger runs the launcher flywheels at the requested RPM.
         opjoystick.rightTrigger().whileTrue(Commands.startEnd(
-            () -> launcher.runRollers(),
-            launcher::stopLauncher
+            () -> {
+                launcher.setRollerVelocity(2000.0);
+                launcher.runRollers();
+            },
+            launcher::stopFlywheels,
+            launcher
         ));
-        opjoystick.x().whileTrue(Commands.startEnd(
-            () -> launcher.runKicker(),
-            launcher::stopLauncher
+
+        // Left trigger positions the hood and runs the kicker while the intake retracts
+        // and performs one slow in-then-out roller feed.
+        opjoystick.leftTrigger().whileTrue(Commands.parallel(
+            Commands.startEnd(
+                () -> {
+                    launcher.runHood();
+                    launcher.runKicker();
+                },
+                launcher::stopKicker,
+                launcher
+            ),
+            intake.retractAndSlowInThenOut()
         ));
         
 
