@@ -18,6 +18,8 @@ import org.wpilib.command2.button.CommandNiDsXboxController;
 import org.wpilib.command2.button.CommandXboxController;
 import org.wpilib.command2.button.RobotModeTriggers;
 import org.wpilib.command2.sysid.SysIdRoutine.Direction;
+import org.wpilib.driverstation.POVDirection;
+import org.wpilib.command2.button.*;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -72,6 +74,14 @@ private Selectable<Command> autoChooser;
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
 
+
+        joystick.rightTrigger().whileTrue(Commands.startEnd(
+            () -> intake.runIntake(),
+            () -> intake.stopIntake()));
+
+        joystick.leftTrigger().whileTrue(Commands.startEnd(
+            () -> intake.runOuttake(),
+            () -> intake.stopIntake()));
         //joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
         // joystick.b().whileTrue(drivetrain.applyRequest(() ->
         //     point.withModuleDirection(new Rotation2d(joystick.getLeftY(), joystick.getLeftX()))
@@ -84,27 +94,34 @@ private Selectable<Command> autoChooser;
         // joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.FORWARD));
         // joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.REVERSE));
 
-        // Reset the field-centric heading on left bumper press.][\]
+        // Reset the field-centric he[\]ading on left bumper press.][\]
         joystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
+        // Stow the hood from either unused right bumper.
+        joystick.rightBumper().onTrue(launcher.runOnce(launcher::stowHood));
+        opjoystick.rightBumper().onTrue(launcher.runOnce(launcher::stowHood));
+
         // Intake deployment is controlled entirely from the operator D-pad.
-        opjoystick.povUp().onTrue(intake.runOnce(intake::extendIntake));
-        opjoystick.povDown().onTrue(intake.runOnce(intake::retractIntake));
-        opjoystick.povRight().whileTrue(Commands.startEnd(
+        opjoystick.y().onTrue(intake.runOnce(intake::extendIntake));
+        opjoystick.a().onTrue(intake.runOnce(intake::retractIntake));
+
+        opjoystick.b().whileTrue(Commands.startEnd(
             intake::manualDeployIn,
             intake::stopDeployment,
             intake
         ));
-        opjoystick.povLeft().whileTrue(Commands.startEnd(
+
+        opjoystick.x().whileTrue(Commands.startEnd(
             intake::manualDeployOut,
             intake::stopDeployment,
+
             intake
         ));
 
         // Right trigger runs the launcher flywheels at the requested RPM.
         opjoystick.rightTrigger().whileTrue(Commands.startEnd(
             () -> {
-                launcher.setRollerVelocity(2000.0);
+                launcher.setRollerVelocity(2500.0);
                 launcher.runRollers();
             },
             launcher::stopFlywheels,

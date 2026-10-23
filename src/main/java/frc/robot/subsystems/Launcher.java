@@ -1,33 +1,23 @@
 package frc.robot.subsystems;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.VoltageOut; 
-import com.ctre.phoenix6.hardware.TalonFX; 
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.configs.HardwareLimitSwitchConfigs;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-//import org.wpilib.smartdashboard.SmartDashboard;
 import org.wpilib.telemetry.Telemetry;
-
-//import com.revrobotics.AbsoluteEncoder;
-import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import frc.robot.constants.*;
+import frc.robot.constants.Constants;
 
 import org.wpilib.command2.SubsystemBase;
 import org.wpilib.hardware.bus.CANPort;
 
 public class Launcher extends SubsystemBase {
+
+    private static final double HOOD_POSITION_TOLERANCE = 0.01;
     
     private final TalonFX FlywheelA = new TalonFX(41, new CANBus(CANPort.CAN_S0));
     private final TalonFX FlywheelB = new TalonFX(40, new CANBus(CANPort.CAN_S0));
@@ -39,7 +29,7 @@ public class Launcher extends SubsystemBase {
     
     private double targetRollerRPM = 0.0;
     private double targetHoodPosition = 0.0;
-
+    private boolean hoodPositionActive = false;
     private final VelocityVoltage velocityControl = new VelocityVoltage(0);
 
     private final PositionVoltage positionControl = new PositionVoltage(0);
@@ -54,21 +44,20 @@ public class Launcher extends SubsystemBase {
         hoodAbsoluteEncoder.getConfigurator().apply(encoderConfig);
 
         TalonFXConfiguration config = new TalonFXConfiguration();
-        // HoodKraken.getConfigurator().apply(new TalonFXConfiguration());
-        // config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        // config.CurrentLimits.SupplyCurrentLimit = 40;
-        // config.Slot0.kP = 5;
-        // config.Slot0.kI = 0.2;
-        // config.Slot0.kD = 0.0;
-        // config.Slot0.kV = 1.8;
-        // // config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
-        // // config.Feedback.FeedbackRemoteSensorID = hoodAbsoluteEncoder.getDeviceID();
-        // // config.Feedback.SensorToMechanismRatio = 1.0;
-        // // config.Feedback.RotorToSensorRatio = 4.0;
-        // HoodKraken.getConfigurator().apply(config);
-        // HoodKraken.setPosition(0);
+        HoodKraken.getConfigurator().apply(new TalonFXConfiguration());
+        config.CurrentLimits.SupplyCurrentLimitEnable = true;
+        config.CurrentLimits.SupplyCurrentLimit = 40;
+        config.Slot0.kP = 5;
+        config.Slot0.kI = 0.2;
+        config.Slot0.kD = 0.0;
+        config.Slot0.kV = 1.8;
+        // config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
+        // config.Feedback.FeedbackRemoteSensorID = hoodAbsoluteEncoder.getDeviceID();
+        // config.Feedback.SensorToMechanismRatio = 1.0;
+        // config.Feedback.RotorToSensorRatio = 4.0;
+        HoodKraken.getConfigurator().apply(config);
+        HoodKraken.setPosition(0);
         
-
 
         FlywheelA.getConfigurator().apply(new TalonFXConfiguration());
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -96,6 +85,7 @@ public class Launcher extends SubsystemBase {
         config.Slot0.kD = 0.0;
         config.Slot0.kV = 0.2056;
         FlywheelC.getConfigurator().apply(config);
+
 
         FlywheelD.getConfigurator().apply(new TalonFXConfiguration());
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -130,6 +120,21 @@ public class Launcher extends SubsystemBase {
 
     private final VoltageOut voltageControl = new VoltageOut(0);
 
+    public void setKicker1Voltage(double volts) {
+        Kicker1.setControl(voltageControl.withOutput(volts));
+
+    }
+
+    public void setKicker2Voltage(double volts) {
+        Kicker2.setControl(voltageControl.withOutput(volts));
+
+    }
+
+    public void setRollerVelocity(double RPM) {
+        this.targetRollerRPM = RPM;
+        
+    }
+
     public void setVoltage(double volts) {
         FlywheelA.setControl(voltageControl.withOutput(volts));
     }
@@ -144,16 +149,6 @@ public class Launcher extends SubsystemBase {
 
     public void setFlywheelDVoltage(double volts) {
         FlywheelD.setControl(voltageControl.withOutput(volts));
-    }
-
-    public void setKicker1Voltage(double volts) {
-        Kicker1.setControl(voltageControl.withOutput(volts));
-
-    }
-
-    public void setKicker2Voltage(double volts) {
-        Kicker2.setControl(voltageControl.withOutput(volts));
-
     }
 
     public void runLauncher(double volts) {
@@ -173,11 +168,6 @@ public class Launcher extends SubsystemBase {
         Kicker1.stopMotor();
         Kicker2.stopMotor();
     }
-
-    public void setRollerVelocity(double RPM) {
-        this.targetRollerRPM = RPM;
-        
-    }
     public void runRollers() {
         double rps = targetRollerRPM / 60.0;
         FlywheelA.setControl(velocityControl.withVelocity(-rps) );
@@ -190,7 +180,7 @@ public class Launcher extends SubsystemBase {
     public void runKicker() {
         setKicker1Voltage(-16.0);
         setKicker2Voltage(-16.0);
-        HoodKraken.setControl(positionControl.withPosition(0.4));
+        moveHoodTo(0.2);
     }
 
     public void stopKicker() {
@@ -198,17 +188,36 @@ public class Launcher extends SubsystemBase {
         Kicker2.stopMotor();
     }
 
-    
-
-    
-
-
-
     public void runHood() {
-        HoodKraken.setControl(positionControl.withPosition(0.4));
+        moveHoodTo(0.0);
     }
+
     
+
     
+
+
+    public void stowHood() {
+        moveHoodTo(0.0);
+    }
+
+    private void moveHoodTo(double targetPosition) {
+        targetHoodPosition = targetPosition;
+        hoodPositionActive = true;
+        updateHoodPosition();
+    }
+
+    private void updateHoodPosition() {
+        if (!hoodPositionActive) return;
+        double error = targetHoodPosition - HoodKraken.getPosition().getValueAsDouble();
+        if (Math.abs(error) <= HOOD_POSITION_TOLERANCE) {
+            HoodKraken.stopMotor();
+            hoodPositionActive = false;
+        } else {
+            HoodKraken.setControl(positionControl.withPosition(targetHoodPosition));
+        }
+    }
+
     public void setKickerVelocity(double RPM) {
         Kicker1.setControl(velocityControl.withVelocity(RPM / 60.0));
     }
@@ -229,27 +238,25 @@ public class Launcher extends SubsystemBase {
         FlywheelC.stopMotor();
         FlywheelD.stopMotor();
     }
-
+    
+    
     public void stopFlywheels() {
         stopMainRollers();
     }
 
     private static final String KEY_FLY_RPM = "Launcher RPM";
     private static final String KEY_HOOD_ANGLE = "Hood ANG" ;
-    
 
     @Override
     public void periodic() {
-
-        
-        
+        updateHoodPosition();
         // double hoodAngle = SmartDashboard.getNumber(KEY_HOOD_ANGLE, 0.0);
         // double launcherRPM = SmartDashboard.getNumber(KEY_FLY_RPM, 0.0);
-       
-        
         // setFlywheelVelocity(launcherRPM);
         // setHoodPosition(hoodAngle);
     }
+    
+
 }
 
 

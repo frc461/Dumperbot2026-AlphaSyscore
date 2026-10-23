@@ -20,14 +20,13 @@ public class Intake extends SubsystemBase {
     // Stop commanding position control once the deploy is this close to its target (rotor rotations).
     private static final double DEPLOY_POSITION_TOLERANCE = 0.2;
     private static final double MANUAL_DEPLOY_VOLTS = 2.0;
-    private static final double SLOW_FEED_VOLTS = 3.0;
-    private static final double FEED_IN_SECONDS = 0.5;
+    private static final double SLOW_FEED_VOLTS = 6.0;
+        private static final double FEED_IN_SECONDS = 0.5;
     private static final double FEED_OUT_SECONDS = 0.5;
     private static final double HOMING_VOLTAGE = 2.0;
     private static final double HOMING_STATOR_CURRENT = 45.0;
     private static final int HOMING_STALL_CYCLES = 8;
     private static final int HOMING_TIMEOUT_CYCLES = 150;
-    
     private final TalonFX DeployKraken = new TalonFX(42, new CANBus(CANPort.CAN_S4));
     private final TalonFX IntakeRollerKrakenA = new TalonFX(59, new CANBus(CANPort.CAN_S4));
     private final TalonFX IntakeRollerKrakenB = new TalonFX(56, new CANBus(CANPort.CAN_S4));
@@ -70,6 +69,12 @@ public class Intake extends SubsystemBase {
         IntakeRollerKrakenA.setControl(voltageControl.withOutput(16.0));
         IntakeRollerKrakenB.setControl(voltageControl.withOutput(-16.0));
     }
+
+    public void runOuttake() {
+        IntakeRollerKrakenA.setControl(voltageControl.withOutput(-16.0));
+        IntakeRollerKrakenB.setControl(voltageControl.withOutput(16.0));
+    }
+
 
     public void runIntake() {
         setIntakeVoltage();
@@ -124,16 +129,11 @@ public class Intake extends SubsystemBase {
         DeployKraken.setControl(voltageControl.withOutput(volts));
     }
 
-        private final VelocityVoltage velocityControl = new VelocityVoltage(0);
-
+    private final VelocityVoltage velocityControl = new VelocityVoltage(0);
 
     public void setVelocity(double rotationsPerSecond) {
-        DeployKraken.setControl(
-            velocityControl.withVelocity(rotationsPerSecond)
-        );
-        IntakeRollerKrakenA.setControl(
-            velocityControl.withVelocity(rotationsPerSecond)
-        );
+        DeployKraken.setControl(velocityControl.withVelocity(rotationsPerSecond));
+        IntakeRollerKrakenA.setControl(velocityControl.withVelocity(rotationsPerSecond));
     }
 
     public void extendIntake() {
@@ -166,8 +166,6 @@ public class Intake extends SubsystemBase {
         DeployKraken.stopMotor();
     }
 
-    
-
     public void ExtendIntake() {
         extendIntake();
     }
@@ -175,28 +173,24 @@ public class Intake extends SubsystemBase {
     public void RetractIntake() {
         retractIntake();
     }
+
      @Override
     public void periodic() {
         updateDeployPosition();
         // if (homing) {
         //     homingCycles++;
         //     DeployKraken.setControl(voltageControl.withOutput(-HOMING_VOLTAGE));
-
         //     if (DeployKraken.getStatorCurrent().getValueAsDouble() >= HOMING_STATOR_CURRENT) {
         //         stalledCycles++;
         //     } else {
         //         stalledCycles = 0;
         //     }
-
         //     if (stalledCycles >= HOMING_STALL_CYCLES || homingCycles >= HOMING_TIMEOUT_CYCLES) {
         //         DeployKraken.stopMotor();
-        //         if (stalledCycles >= HOMING_STALL_CYCLES) {
-        //             DeployKraken.setPosition(RETRACTED_POSITION);
-        //         }
+        //         if (stalledCycles >= HOMING_STALL_CYCLES) DeployKraken.setPosition(RETRACTED_POSITION);
         //         homing = false;
         //     }
         // }
-
         // Telemetry.log("Intake Position", DeployKraken.getPosition().getValueAsDouble());
         // Telemetry.log("Intake Homing", homing);
     }
